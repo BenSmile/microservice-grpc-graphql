@@ -52,3 +52,14 @@ input OrderInput {
   accountId: String!
   products: [OrderProductInput!]!
 }
+
+type Mutation {
+  createAccount(account: Account): Account
+  createProduct(product: ProductInput): Product
+  createOrder(order: OrderInput): Order
+}
+
+type Query {
+  accounts(pagination: PaginationInput, id: String): [Account!]!
+  products(pagination: PaginationInput, query: String, id: String): [Product!]!
+}
