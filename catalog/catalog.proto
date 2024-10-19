@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./";
+
+// protoc --go_out=./pb --go-grpc_out=./pb catalog.proto
+
+message Product {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+}
+
+message CreateProductRequest {
+  string name = 1;
+  string description = 2;
+  double price = 3;
+}
+
+message CreateProductResponse { Product product = 1; }
+
+message GetProductByIdRequest { string id = 1; }
+
+message GetProductByIdResponse { Product product = 1; }
+
+message GetProductsRequest {
+  uint64 skip = 1;
+  uint64 take = 2;
+  repeated string ids = 3;
+  string query = 4;
+}
+
+message GetProductsResponse { repeated Product products = 1; }
+
+service CatalogService {
+  rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse) {}
+  rpc GetProducts(GetProductsRequest) returns (GetProductsResponse) {}
+  rpc GetProductById(GetProductByIdRequest) returns (GetProductByIdResponse) {}
+}
