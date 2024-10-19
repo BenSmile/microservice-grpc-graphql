@@ -54,7 +54,7 @@ input OrderInput {
 }
 
 type Mutation {
-  createAccount(account: Account): Account
+  createAccount(account: AccountInput): Account
   createProduct(product: ProductInput): Product
   createOrder(order: OrderInput): Order
 }
