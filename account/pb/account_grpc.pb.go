@@ -78,6 +78,7 @@ type AccountServiceServer interface {
 	CreateAccount(context.Context, *CreateAccountRequest) (*CreateAccountResponse, error)
 	GetAccountById(context.Context, *GetAccountByIdRequest) (*GetAccountByIdResponse, error)
 	GetAccounts(context.Context, *GetAccountsRequest) (*GetAccountsResponse, error)
+	mustEmbedUnimplementedAccountServiceServer()
 }
 
 // UnimplementedAccountServiceServer must be embedded to have
