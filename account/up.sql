@@ -1,0 +1,4 @@
+CREATE TABLE accounts(
+    id VARCHAR(27) PRIMARY KEY,
+    name VARCHAR(24) NOT NULL
+);
