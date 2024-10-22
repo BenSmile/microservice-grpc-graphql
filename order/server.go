@@ -129,9 +129,67 @@ func (s *grpcServer) PlaceOrder(ctx context.Context, r *pb.PlaceOrderRequest) (*
 		Order: orderProto,
 	}, nil
 }
-func (s *grpcServer) GetOrder(context.Context, *pb.GetOrderRequest) (*pb.GetOrderReponse, error) {
+func (s *grpcServer) GetOrder(ctx context.Context, p *pb.GetOrderRequest) (*pb.GetOrderReponse, error) {
 	return nil, nil
 }
-func (s *grpcServer) GetOrdersAccountById(context.Context, *pb.GetOrdersByAccountRequest) (*pb.GetOrdersByAccountReponse, error) {
-	return nil, nil
+
+func (s *grpcServer) GetOrdersAccountById(ctx context.Context, p *pb.GetOrdersByAccountRequest) (*pb.GetOrdersByAccountReponse, error) {
+	accountOrders, err := s.service.GetOrdersByAccount(ctx, p.AccountId)
+	if err != nil {
+		return nil, err
+	}
+
+	productsIdMap := map[string]bool{}
+
+	for _, o := range accountOrders {
+		for _, p := range o.Products {
+			productsIdMap[p.Id] = true
+		}
+	}
+
+	productIds := []string{}
+	for id := range productsIdMap {
+		productIds = append(productIds, id)
+	}
+
+	products, err := s.catalogClient.GetProducts(ctx, "", productIds, 0, 0)
+	if err != nil {
+		log.Printf("Error when getting products : %v\n", err)
+		return nil, errors.New("product not found")
+	}
+
+	// *415*1#
+
+	orders := []*pb.Order{}
+
+	for _, o := range accountOrders {
+		op := &pb.Order{
+			AccountId:  o.AccountId,
+			Id:         o.Id,
+			TotalPrice: o.TotalPrice,
+		}
+		op.CreatedAt, _ = o.CreatedAt.MarshalBinary()
+		for _, product := range o.Products {
+			for _, p := range products {
+				if p.Id == product.Id {
+					product.Name = p.Name
+					product.Description = p.Description
+					product.Price = p.Price
+					break
+				}
+			}
+			op.Products = append(op.Products, &pb.Order_OrderedProduct{
+				Id:          product.Id,
+				Name:        product.Name,
+				Description: product.Description,
+				Price:       product.Price,
+				Quantity:    product.Quantity,
+			})
+		}
+		orders = append(orders, op)
+	}
+
+	return &pb.GetOrdersByAccountReponse{
+		Orders: orders,
+	}, nil
 }
