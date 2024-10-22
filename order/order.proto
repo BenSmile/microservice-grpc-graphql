@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./";
+
+// protoc --go_out=./pb --go-grpc_out=./pb order.proto
+
+message Order {
+
+  message OrderedProduct {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    double price = 4;
+    uint32 quantity = 5;
+  }
+
+  string id = 1;
+  bytes createdAt = 2;
+  string accountId = 3;
+  double totalPrice = 4;
+  repeated OrderedProduct products = 5;
+}
+
+message PlaceOrderRequest {
+  message OrderedProduct {
+    string productId = 1;
+    uint32 quantity = 2;
+  }
+  string accountId = 1;
+  repeated OrderedProduct products = 2;
+}
+
+message PlaceOrderReponse { Order order = 1; }
+
+message GetOrderRequest { string accountId = 1; }
+
+message GetOrderReponse { Order orders = 1; }
+
+message GetOrdersByAccountRequest { string accountId = 1; }
+
+message GetOrdersByAccountReponse { repeated Order orders = 1; }
+
+service OrderService {
+  rpc PlaceOrder(PlaceOrderRequest) returns (PlaceOrderReponse) {}
+  rpc GetOrder(GetOrderRequest) returns (GetOrderReponse) {}
+  rpc GetOrdersAccountById(GetOrdersByAccountRequest)
+      returns (GetOrdersByAccountReponse) {}
+}
