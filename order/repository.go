@@ -62,7 +62,7 @@ func (r *postgresRepository) PlaceOrder(ctx context.Context, order Order) error 
 	stmt, _ := tx.PrepareContext(ctx, pq.CopyIn("order_products", "order_id", "product_id", "quantity"))
 
 	for _, p := range order.Products {
-		_, err = stmt.ExecContext(ctx, order.Id, p.ProductId, p.Quantity)
+		_, err = stmt.ExecContext(ctx, order.Id, p.Id, p.Quantity)
 		if err != nil {
 			return err
 		}
@@ -98,52 +98,50 @@ func (r *postgresRepository) GetOrdersByAccount(ctx context.Context, accountId s
 	}
 	defer rows.Close()
 
-	orders := []Order{}
-	lastOrder := &Order{}
-	orderedProduct := &OrderedProduct{}
-	var products []OrderedProduct
+	orderMap := make(map[string]*Order)
 
 	for rows.Next() {
-		var order Order
+		var (
+			id, accountId string
+			createdAt     sql.NullTime
+			totalPrice    sql.NullFloat64
+			productId     string
+			quantity      int
+		)
 		if err := rows.Scan(
-			&order.Id,
-			&order.CreatedAt,
-			&order.AccountId,
-			&orderedProduct.ProductId,
-			&orderedProduct.Quantity,
+			&id,
+			&createdAt,
+			&accountId,
+			&totalPrice,
+			&productId,
+			&quantity,
 		); err != nil {
 			return nil, err
 		}
-		if lastOrder.Id != "" && lastOrder.Id != order.Id {
-			newOrder := Order{
-				Id:         lastOrder.Id,
-				AccountId:  lastOrder.AccountId,
-				CreatedAt:  lastOrder.CreatedAt,
-				TotalPrice: lastOrder.TotalPrice,
-				Products:   lastOrder.Products,
+		order, exists := orderMap[id]
+		if !exists {
+			order = &Order{
+				Id:         id,
+				AccountId:  accountId,
+				CreatedAt:  createdAt.Time,
+				TotalPrice: totalPrice.Float64,
+				Products:   []OrderedProduct{},
 			}
-			orders = append(orders, newOrder)
-			products = []OrderedProduct{}
 		}
-		products = append(products, OrderedProduct{
-			ProductId: orderedProduct.ProductId,
-			Quantity:  orderedProduct.Quantity,
+		order.Products = append(order.Products, OrderedProduct{
+			Id:       productId,
+			Quantity: uint32(quantity),
 		})
-		*lastOrder = order
-	}
-	if lastOrder != nil {
-		newOrder := Order{
-			Id:         lastOrder.Id,
-			AccountId:  lastOrder.AccountId,
-			CreatedAt:  lastOrder.CreatedAt,
-			TotalPrice: lastOrder.TotalPrice,
-			Products:   lastOrder.Products,
-		}
-		orders = append(orders, newOrder)
 	}
 
-	if err = rows.Err(); err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
+	}
+
+	var orders []Order
+
+	for _, order := range orderMap {
+		orders = append(orders, *order)
 	}
 
 	return orders, nil
