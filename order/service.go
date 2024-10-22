@@ -21,7 +21,7 @@ type Order struct {
 }
 
 type OrderedProduct struct {
-	ProductId   string
+	Id          string
 	Quantity    uint32
 	Name        string
 	Description string
