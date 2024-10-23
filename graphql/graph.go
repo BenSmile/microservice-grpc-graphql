@@ -4,12 +4,13 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/bensmile/microservice-grpc-graphql/account"
 	"github.com/bensmile/microservice-grpc-graphql/catalog"
+	"github.com/bensmile/microservice-grpc-graphql/order"
 )
 
 type Server struct {
 	accountClient *account.Client
 	catalogClient *catalog.Client
-	// orderClient   *order.Client
+	orderClient   *order.Client
 }
 
 func NewGraphqlServer(accountUrl, catalogUrl, orderUrl string) (*Server, error) {
@@ -24,16 +25,16 @@ func NewGraphqlServer(accountUrl, catalogUrl, orderUrl string) (*Server, error) 
 		catalogClient.Close()
 		return nil, err
 	}
-	// orderClient, err := order.NewClient(orderUrl)
-	// if err != nil {
-	// 	orderClient.Close()
-	// 	return nil, err
-	// }
+	orderClient, err := order.NewClient(orderUrl)
+	if err != nil {
+		orderClient.Close()
+		return nil, err
+	}
 
 	return &Server{
 		accountClient,
 		catalogClient,
-		// orderClient,
+		orderClient,
 	}, nil
 }
 
