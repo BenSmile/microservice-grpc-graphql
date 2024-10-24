@@ -25,7 +25,7 @@ func main() {
 
 	var r account.Repository
 	retry.ForeverSleep(2*time.Second, func(_ int) error {
-		r, err = account.NewPostresRepository("postgres://root:secret@localhost:5432/accounts_services?sslmode=disable")
+		r, err = account.NewPostresRepository(cfg.DatabaseUrl)
 		if err != nil {
 			log.Fatal(err)
 		}
